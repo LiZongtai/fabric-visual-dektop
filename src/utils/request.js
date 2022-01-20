@@ -4,8 +4,8 @@
 import axios from "axios";
 
 
-const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiZXhwbG9yZXJhZG1pbiIsIm5ldHdvcmsiOiJ0ZXN0LW5ldHdvcmsiLCJpYXQiOjE2NDI1Mjg5NjYsImV4cCI6MTY0MjUzNjE2Nn0.qe_5Tni3e_pwd8gfiXG5iBdbgNV72n0ZgfBtNbIv05M";
-localStorage.setItem("token",token);
+// const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiZXhwbG9yZXJhZG1pbiIsIm5ldHdvcmsiOiJ0ZXN0LW5ldHdvcmsiLCJpYXQiOjE2NDI1Mjg5NjYsImV4cCI6MTY0MjUzNjE2Nn0.qe_5Tni3e_pwd8gfiXG5iBdbgNV72n0ZgfBtNbIv05M";
+// localStorage.setItem("token",token);
 axios.defaults.timeout = 100000;
 axios.defaults.baseURL = "http://127.0.0.1:8081";
 // axios.interceptors.request.use(

@@ -46,3 +46,8 @@ export function getTxDetail(txId) {
     return request("GET", `/api/transaction/${channelId}/${txId}`, {}).then(res => res);
 }
 
+export function getBlockActivity() {
+    const channelId = JSON.parse(localStorage.getItem("channel")).channel_genesis_hash;
+    return request("GET", `/api/blockActivity/${channelId}`, {}).then(res => res);
+}
+

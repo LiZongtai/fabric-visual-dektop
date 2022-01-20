@@ -46,6 +46,7 @@
     "electron-squirrel-startup": "^1.0.0",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.34",
+    "nanoid": "^3.2.0",
     "node-sass": "^7.0.1",
     "react": "^16.13.1",
     "react-app-rewired": "^2.1.11",
@@ -95,6 +96,6 @@
     }
   },
   "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
-  "author": "LiZongtai",
+  "author": "Zhang Hanfu, Li Zongtai, Han Shaoyi",
   "license": "ISC"
 }

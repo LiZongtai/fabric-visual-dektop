@@ -32,9 +32,8 @@ export default class App extends Component {
         let channel;
         this.interval = setInterval(() => {
             api.getChannelInfo().then((res) => {
-                
                 this.setState({channels:res.channels})
-                this.setState({channel:this.state.channels[0]})
+                this.setState({channel:res.channels[0]})
                 const menu = (
                     <Menu>
                         {
@@ -53,9 +52,9 @@ export default class App extends Component {
                 
                 
             }).then(()=>{
-                console.log(channel);
-                    if (!localStorage.getItem("channel")) {
-                        localStorage.setItem("channel", JSON.stringify(channel));
+                    if (this.state.channel!=undefined) {
+                        localStorage.setItem("channel", JSON.stringify(this.state.channel));
+                        clearInterval(this.interval)
                     }
                 }
             )

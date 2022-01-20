@@ -1,9 +1,11 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import CirclePacking from "../CirclePacking";
 import ReactEcharts from 'echarts-for-react';
-import {Card, Col, Row, Statistic} from 'antd';
+import { Card, Col, Row, Statistic, Timeline, Button, Space, Modal } from 'antd';
 import * as api from "../../api/main";
 import moment from 'moment-timezone';
+import { nanoid } from "nanoid";
+import ReactJson from "react-json-view";
 
 export default class Home extends Component {
 
@@ -17,12 +19,20 @@ export default class Home extends Component {
         orgTxOption: {},
         blockByHourOption: {},
         txByHourOption: {},
+        blockActivity: [],
+        isModalVisible: false,
+        blockInfo: {},
+        txInfoList: [],
     };
 
     load = () => {
         api.getChannelStatus().then((res) => {
-            this.setState({channelStatus: res});
+            this.setState({ channelStatus: res });
         });
+
+        api.getBlockActivity().then((res) => {
+            this.setState({ blockActivity: res.row });
+        })
 
         api.getPeersStatus().then((res) => {
             let network = {
@@ -78,7 +88,7 @@ export default class Home extends Component {
             });
             network.children[0].children = orderChildren;
             network.children[1].children = orgChildren;
-            this.setState({network});
+            this.setState({ network });
         })
 
         api.getTxByOrg().then((res) => {
@@ -118,7 +128,7 @@ export default class Home extends Component {
                     }
                 ]
             };
-            this.setState({orgTxOption: option});
+            this.setState({ orgTxOption: option });
         })
 
         api.getBlocksByHour().then((res) => {
@@ -147,7 +157,7 @@ export default class Home extends Component {
                     }
                 ]
             };
-            this.setState({blockByHourOption: option});
+            this.setState({ blockByHourOption: option });
         });
 
         api.getTxByHour().then((res) => {
@@ -176,23 +186,43 @@ export default class Home extends Component {
                     }
                 ]
             };
-            this.setState({txByHourOption: option});
+            this.setState({ txByHourOption: option });
         })
     }
 
     componentDidMount() {
-        this.load();
         this.interval = setInterval(() => {
             this.load();
-        }, 1000);
+        }, 2000);
     }
 
     componentWillUnmount() {
         clearInterval(this.interval);
     }
 
+    detail = (blockInfo) => {
+        return () => {
+            let { txInfoList } = this.state;
+            blockInfo.txhash.map((txId) => {
+                api.getTxDetail(txId).then((res) => {
+                    txInfoList.push(res.row);
+                    this.setState({ txInfoList });
+                })
+            });
+            this.setState({ isModalVisible: true, blockInfo });
+        }
+    };
+
+    handleOk = () => {
+        this.setState({ isModalVisible: false })
+    };
+
+    handleCancel = () => {
+        this.setState({ isModalVisible: false })
+    };
+
     render() {
-        const {channelStatus, network, orgTxOption, blockByHourOption, txByHourOption} = this.state;
+        const { channelStatus, network, orgTxOption, blockByHourOption, txByHourOption, blockActivity, isModalVisible, blockInfo, txInfoList } = this.state;
         return (
             <div>
                 <Card>
@@ -214,7 +244,7 @@ export default class Home extends Component {
 
                 <Row>
                     <Col span={12}>
-                        <div style={{marginTop: "30px"}}>
+                        <div style={{ marginTop: "30px" }}>
                             <Card title="网络架构">
                                 <div style={{ height: "500px" }}>
                                     <CirclePacking network={network} />
@@ -223,7 +253,7 @@ export default class Home extends Component {
                         </div>
                     </Col>
                     <Col span={12}>
-                        <div style={{marginTop: "30px"}}>
+                        <div style={{ marginTop: "30px" }}>
                             <Card title="各组织交易">
                                 <div>
                                     <ReactEcharts option={orgTxOption} style={{ height: "500px" }} />
@@ -234,7 +264,37 @@ export default class Home extends Component {
                 </Row>
                 <Row>
                     <Col span={12}>
-                        <div style={{marginTop: "30px"}}>
+                        <div style={{ marginTop: "30px" }}>
+                            <Card title="最新区块">
+                                <div style={{ height: "500px", overflow: "auto" }}>
+                                    <Timeline>
+                                        {
+                                            blockActivity.map((block) => {
+                                                return (
+                                                    <Timeline.Item key={nanoid()}>
+                                                        <Card title={"区块" + block.blocknum}>
+                                                            <Button type="primary" onClick={this.detail(block)} style={{ marginBottom: "10px" }} size="small">查看详情</Button>
+                                                            <p><b>通道名称：</b>{block.channelname}</p>
+                                                            <p><b>数据Hash：</b>{block.datahash}</p>
+                                                            <p><b>交易数量：</b>{block.txcount}</p>
+                                                            <p><b>创建时间：</b>{
+                                                                moment(block.createdt)
+                                                                    .tz(moment.tz.guess())
+                                                                    .format('yyyy-MM-DD hh:mm:ss A')
+                                                            }</p>
+                                                        </Card>
+                                                    </Timeline.Item>
+                                                )
+                                            })
+                                        }
+                                    </Timeline>
+                                </div>
+                            </Card>
+                        </div>
+                    </Col>
+ 
+                    <Col span={12}>
+                        <div style={{ marginTop: "30px" }}>
                             <Card title="区块速率">
                                 <div style={{ height: "500px" }}>
                                     <ReactEcharts option={blockByHourOption} style={{ height: "500px" }} />
@@ -242,8 +302,10 @@ export default class Home extends Component {
                             </Card>
                         </div>
                     </Col>
+                    </Row>
+                <Row>
                     <Col span={12}>
-                        <div style={{marginTop: "30px"}}>
+                        <div style={{ marginTop: "30px" }}>
                             <Card title="交易速率">
                                 <div style={{ height: "500px" }}>
                                     <ReactEcharts option={txByHourOption} style={{ height: "500px" }} />
@@ -252,6 +314,15 @@ export default class Home extends Component {
                         </div>
                     </Col>
                 </Row>
+                <Modal width="1000px" bodyStyle={{height: "500px", overflow: "auto"}} title="区块详情" visible={isModalVisible} onOk={this.handleOk} onCancel={this.handleCancel}>
+                    <p><b>区块号：</b>{blockInfo.blocknum}</p>
+                    <p><b>交易数量：</b>{blockInfo.txcount}</p>
+                    <p><b>区块Hash：</b>{blockInfo.blockhash}</p>
+                    <p><b>数据Hash：</b>{blockInfo.datahash}</p>
+                    <p><b>上一区块Hash：</b>{blockInfo.prehash}</p>
+                    <p><b>交易列表</b></p>
+                    <ReactJson src={txInfoList} />
+                </Modal>
             </div>
         );
     }
