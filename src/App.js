@@ -5,6 +5,7 @@ import Block from "./components/Block";
 import Chaincode from "./components/Chaincode";
 import Channel from "./components/Channel";
 import Network from "./components/Network";
+import Transaction from './components/Transaction';
 
 import { Layout, Menu, Breadcrumb, Dropdown,  } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
@@ -92,6 +93,7 @@ export default class App extends Component {
                             <Menu.Item key={4}><NavLink to="/network">网络</NavLink></Menu.Item>
                             <Menu.Item key={5}><NavLink to="/chaincode">链码</NavLink></Menu.Item>
                             <Menu.Item key={6}><NavLink to="/channel">通道</NavLink></Menu.Item>
+                            <Menu.Item key={7}><NavLink to="/transaction">交易</NavLink></Menu.Item>
                         </Menu>
                     </Header>
                     <Content style={{ padding: '20px 50px' }}>
@@ -108,6 +110,7 @@ export default class App extends Component {
                                 <Route path="/network" component={Network} />
                                 <Route path="/chaincode" component={Chaincode} />
                                 <Route path="/channel" component={Channel} />
+                                <Route path="/transaction" component={Transaction} />
                                 <Redirect to="/home" />
                             </Switch>
                         </div>

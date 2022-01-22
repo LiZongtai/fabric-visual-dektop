@@ -1,12 +1,13 @@
 import React, { Component } from 'react';
 import CirclePacking from "../CirclePacking";
+import MonthCalendar from '../MonthCalendar';
 import ReactEcharts from 'echarts-for-react';
-import { Card, Col, Row, Statistic, Timeline, Button, Space, Modal } from 'antd';
+import { Card, Col, Row, Statistic, Timeline, Button, Space, Modal, Tabs } from 'antd';
 import * as api from "../../api/main";
 import moment from 'moment-timezone';
 import { nanoid } from "nanoid";
 import ReactJson from "react-json-view";
-
+const { TabPane } = Tabs;
 export default class Home extends Component {
 
     state = {
@@ -16,8 +17,11 @@ export default class Home extends Component {
             "color": "hsl(259, 70%, 50%)",
             "children": []
         },
+        blockMonthData:[],
         orgTxOption: {},
+        blockByMinuteOption: {},
         blockByHourOption: {},
+        txByMinuteOption: {},
         txByHourOption: {},
         blockActivity: [],
         isModalVisible: false,
@@ -160,6 +164,48 @@ export default class Home extends Component {
             this.setState({ blockByHourOption: option });
         });
 
+        api.getBlocksByMonth().then((res) => {
+            let data={value:0,
+                day:''
+            };
+            res.rows.map((dc) => {
+                data['value']=dc.count;
+                data['day']=moment(dc.datetime)
+                        .tz(moment.tz.guess())
+                        .format('YYYY-MM-DD');
+               this.state.blockMonthData.push(data);
+            });
+        });
+
+        api.getBlocksByMinute().then((res) => {
+            let xdata = [];
+            let sdata = [];
+            res.rows.map((dc) => {
+                xdata.push(
+                    moment(dc.datetime)
+                        .tz(moment.tz.guess())
+                        .format('mm:ss')
+                );
+                sdata.push(dc.count);
+            });
+            let option = {
+                xAxis: {
+                    type: 'category',
+                    data: xdata
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                        data: sdata,
+                        type: 'line'
+                    }
+                ]
+            };
+            this.setState({ blockByMinuteOption: option });
+        });
+
         api.getTxByHour().then((res) => {
             let xdata = [];
             let sdata = [];
@@ -187,7 +233,36 @@ export default class Home extends Component {
                 ]
             };
             this.setState({ txByHourOption: option });
-        })
+        });
+
+        api.getTxByMinute().then((res) => {
+            let xdata = [];
+            let sdata = [];
+            res.rows.map((dc) => {
+                xdata.push(
+                    moment(dc.datetime)
+                        .tz(moment.tz.guess())
+                        .format('mm:ss')
+                );
+                sdata.push(dc.count);
+            });
+            let option = {
+                xAxis: {
+                    type: 'category',
+                    data: xdata
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                        data: sdata,
+                        type: 'line'
+                    }
+                ]
+            };
+            this.setState({ txByMinuteOption: option });
+        });
     }
 
     componentDidMount() {
@@ -222,7 +297,7 @@ export default class Home extends Component {
     };
 
     render() {
-        const { channelStatus, network, orgTxOption, blockByHourOption, txByHourOption, blockActivity, isModalVisible, blockInfo, txInfoList } = this.state;
+        const { channelStatus, network, orgTxOption, blockByHourOption, blockByMinuteOption, txByHourOption, txByMinuteOption, blockActivity, isModalVisible, blockInfo, txInfoList } = this.state;
         return (
             <div>
                 <Card>
@@ -292,29 +367,55 @@ export default class Home extends Component {
                             </Card>
                         </div>
                     </Col>
- 
+
                     <Col span={12}>
                         <div style={{ marginTop: "30px" }}>
                             <Card title="区块速率">
                                 <div style={{ height: "500px" }}>
-                                    <ReactEcharts option={blockByHourOption} style={{ height: "500px" }} />
-                                </div>
-                            </Card>
-                        </div>
-                    </Col>
-                    </Row>
-                <Row>
-                    <Col span={12}>
-                        <div style={{ marginTop: "30px" }}>
-                            <Card title="交易速率">
-                                <div style={{ height: "500px" }}>
-                                    <ReactEcharts option={txByHourOption} style={{ height: "500px" }} />
+                                    <Tabs defaultActiveKey="1" >
+                                        <TabPane tab="小时速率" key="1">
+                                            <ReactEcharts option={blockByHourOption} style={{ height: "500px" }} />
+                                        </TabPane>
+                                        <TabPane tab="分钟速率" key="2">
+                                            <ReactEcharts option={blockByMinuteOption} style={{ height: "500px" }} />
+                                        </TabPane>
+                                    </Tabs>
+
                                 </div>
                             </Card>
                         </div>
                     </Col>
                 </Row>
-                <Modal width="1000px" bodyStyle={{height: "500px", overflow: "auto"}} title="区块详情" visible={isModalVisible} onOk={this.handleOk} onCancel={this.handleCancel}>
+                <Row>
+                    <Col span={12}>
+                        <div style={{ marginTop: "30px" }}>
+                            <Card title="交易速率">
+                                <div style={{ height: "500px" }}>
+                                    <Tabs defaultActiveKey="1" >
+                                        <TabPane tab="小时速率" key="1">
+                                            <ReactEcharts option={txByHourOption} style={{ height: "500px" }} />
+                                        </TabPane>
+                                        <TabPane tab="分钟速率" key="2">
+                                            <ReactEcharts option={txByMinuteOption} style={{ height: "500px" }} />
+                                        </TabPane>
+                                    </Tabs>
+                                </div>
+                            </Card>
+                        </div>
+                    </Col>
+                    <Col span={12}>
+                        <div style={{ marginTop: "30px" }}>
+                            <Card title="交易日历">
+                                <div style={{ height: "500px" }}>
+
+                                    <MonthCalendar data={this.state.blockMonthData}/>
+
+                                </div>
+                            </Card>
+                        </div>
+                    </Col>
+                </Row>
+                <Modal width="1000px" bodyStyle={{ height: "500px", overflow: "auto" }} title="区块详情" visible={isModalVisible} onOk={this.handleOk} onCancel={this.handleCancel}>
                     <p><b>区块号：</b>{blockInfo.blocknum}</p>
                     <p><b>交易数量：</b>{blockInfo.txcount}</p>
                     <p><b>区块Hash：</b>{blockInfo.blockhash}</p>
